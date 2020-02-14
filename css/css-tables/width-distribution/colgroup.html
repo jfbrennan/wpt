@@ -1,0 +1,172 @@
+<!doctype html>
+<title>Colgroup width</title>
+<script src='/resources/testharness.js'></script>
+<script src='/resources/testharnessreport.js'></script>
+<script src="/resources/check-layout-th.js"></script>
+<script src="../support/table-inspector.js"></script>
+<link rel="author" title="Aleks Totic" href="atotic@chromium.org" />
+<link rel="help" href="https://www.w3.org/TR/css-tables-3/#distributing-width-to-columns" />
+<style>
+  table {
+    background: gray;
+    border-spacing: 8px 8px;
+    table-layout: auto;
+    margin-top: 4px;
+  }
+  /*table:hover { table-layout: fixed; }*/
+  td {
+    background: #BFB;
+    font-size: 10px;
+    padding: 0;
+  }
+  td > div {
+    display: inline-block;
+    background: rgba(56,162,56,0.3);
+  }
+  .error {
+    color: #b70000;
+  }
+  p {
+    margin-top:4px;
+    margin-bottom:4px;
+  }
+  body {
+    counter-reset: testid;      /* Create a chapter counter scope */
+  }
+  .testdesc {
+    white-space: pre-line;
+    margin-top: 16px;
+  }
+  .testdesc:before {
+    content: counter(testid) ". ";
+    counter-increment: testid;  /* Add 1 to chapter */
+  }
+  .testdesc:first-line {
+    font-family: monospace;
+  }
+</style>
+<h1>Colgroup width</h1>
+<p>colgroup {width:} min_width to 0, and max_width to width.</p>
+<p>Intuitively, one would expect that: &lt;colspan style="width:200px"&gt; and &lt;td style="width:200px"&gt; result in the same layout. This is not true, td sets both min and max widths, and colspan sets only max width</p>
+
+<p class="testdesc">Colgroup width and table-layout:auto
+gridmin is 0, assignable is 200, C0 gets it
+</p>
+<table style="width:200px" data-expected-width=200>
+  <colgroup style="width:300px" ></colgroup>
+  <td data-expected-width=184>Auto</td>
+</table>
+<table style="width:200px" data-expected-width=200>
+  <colgroup style="width:300px" ></colgroup>
+  <td style="width:300px" data-expected-width=184>same, but width also set on td</td>
+</table>
+
+
+<p class="testdesc">Colgroup width and table-layout:fixed
+gridmin is 0, assignable is 200, C0 gets it
+<p class="error">Chrome legacy differs here, and assigns gridmin of 300</p>
+</p>
+<table style="width:200px;table-layout:fixed" data-expected-width=200>
+  <colgroup style="width:300px" ></colgroup>
+  <td data-expected-width=184>Auto</td>
+</table>
+<table style="width:200px;table-layout:fixed" data-expected-width=316>
+  <colgroup style="width:300px" ></colgroup>
+  <tr>
+    <td style="width:300px" data-expected-width=300>same, but width also set on td</td>
+  </tr>
+  <tr>
+    <td style="width:400px">400 here, ignored</td>
+  </tr>
+</table>
+
+
+<p class="testdesc">Colgroup percent width vs td pixel width.
+colgroup percent wins.
+td's min/max width does not propagate.
+<table style="table-layout:fixed;width:252px" data-expected-width=252>
+ <col style="width:40%">
+ <col style="width:60%">
+ <tr>
+  <td style="width:20px" data-expected-width=80><div style="width:100px">100</div></td>
+  <td style="width:20px" data-expected-width=120>foo</td>
+  <td style="width:20px" data-expected-width=20>foo</td>
+ </tr>
+</table>
+
+<p class="testdesc">Colgroup percent width vs td pixel width and table layout:auto
+  <p class="error">DO NOT UNDERSATAND WHAT IS GOING ON IN NG</p>
+<table style="table-layout:fixed;" data-expected-width=524>
+ <col style="width:20%">
+ <tr>
+  <td colspan=2 data-expected-width=508><div style="width:50px" >50</div></td>
+</tr>
+<tr>
+  <td style="width:100px" data-expected-width=100>x</td>
+  <td data-expected-width=400><div style="width:10px">400</div></td>
+ </tr>
+</table>
+
+<p class="testdesc">Colgroup fixed width vs td percent width.
+colgroup fixed wins.
+td's min/max width does not propagate.
+<table style="table-layout:fixed;width:212px" data-expected-width=212>
+ <col style="width:20px">
+ <col style="width:20px">
+ <tr>
+  <td style="width:40%" data-expected-width=60>foo</td>
+  <td style="width:60%" data-expected-width=60>foo</td>
+  <td style="width:20px" data-expected-width=60>foo</td>
+ </tr>
+</table>
+
+<table style="table-layout:fixed;width:212px" data-expected-width=212>
+  <col style="width:10px">
+  <col style="width:20px">
+  <tr>
+    <td style="width:40px">20</td>
+    <td style="width:50px">10</td>
+  </tr>
+</table>
+
+<p class="testdesc">td.fixed, does minwidth propagate?
+<table style="width:1px" data-expected-width=116>
+  <tr>
+    <td style="width:50px" data-expected-width=100><div style="width:100px">50/100</div></td>
+  </tr>
+</table>
+<table style="width:1px;table-layout:fixed" data-expected-width=66>
+  <tr>
+    <td style="width:50px" data-expected-width=50><div style="width:100px">50/100</div></td>
+  </tr>
+</table>
+
+
+<p class="testdesc">Fixed colgroup, does min propagate?</p>
+<table style="width:1px">
+  <col style="width:50px"></col>
+  <tr>
+    <td><div style="width:200px">200 minmax</div></td>
+    <td>Auto</td>
+  </tr>
+</table>
+<table style="width:1px">
+  <col style="width:50px">
+  <tr>
+    <td style="width:200px">200 constrained</div></td>
+    <td>Auto</td>
+  </tr>
+</table>
+<table style="">
+  <col style="width:50px">
+  <tr>
+    <td><div style="width:200px">200 minmax</div></td>
+    <td>Auto</td>
+  </tr>
+  <tr>
+    <td style="width:200px">200 constrained</td>
+  </tr>
+</table>
+<script>
+  checkLayout("table");
+</script>
